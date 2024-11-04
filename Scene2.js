@@ -1,4 +1,3 @@
-
 class Scene2 extends Phaser.Scene{
   constructor(){
     super("playGame");
@@ -12,6 +11,11 @@ class Scene2 extends Phaser.Scene{
     this.ship2 = this.add.sprite(this.game.config.width/2, this.game.config.height/2, "ship2");
     this.ship3 = this.add.sprite(this.game.config.width/2 + 50, this.game.config.height/2, "ship3");
 
+    this.enemies = this.physics.add.group();
+    this.enemies.add(this.ship1);
+    this.enemies.add(this.ship2);
+    this.enemies.add(this.ship3);
+
    
     this.ship1.play("ship1_anim");
     this.ship2.play("ship2_anim");
@@ -22,9 +26,6 @@ class Scene2 extends Phaser.Scene{
     this.ship3.setInteractive();
 
     this.input.on('gameobjectdown', this.destroyShip, this);
-
-
-    this.add.text(20, 20, "playing game", {font:"25px Arial", fill:"yellow"});
 
 
     this.powerUps = this.physics.add.group();
@@ -53,6 +54,63 @@ class Scene2 extends Phaser.Scene{
     this.cursorKeys = this.input.keyboard.createCursorKeys();
     this.player.setCollideWorldBounds(true);
     this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.projectiles = this.add.group();
+
+
+    this.physics.add.collider(this.projectiles, this.powerUps, function(projectile, powerUp){
+      projectile.destroy();
+    });
+
+    this.physics.add.overlap(this.player, this.powerUps, this.pickPowerUp, null, this);
+
+    this.physics.add.overlap(this.player, this.enemies, this.hurtPlayer, null, this);
+
+    
+    this.physics.add.overlap(this.projectiles, this.enemies, this.hitEnemy, null, this);
+
+    var graphics = this.add.graphics();
+    graphics.fillStyle(0x000000, 1);
+    graphics.beginPath();
+    graphics.moveTo(0, 0);
+    graphics.lineTo(this.game.config.width, 0);
+    graphics.lineTo(this.game.config.width, 20);
+    graphics.lineTo(0, 20);
+    graphics.lineTo(0, 0);
+    graphics.closePath();
+    graphics.fillPath();
+
+
+    this.score = 0;
+
+    this.scoreLabel = this.add.bitmapText(10, 5,"pixelFont", "SCORE", 16);
+
+  }
+
+  pickPowerUp(player, powerUp){
+    powerUp.disableBody(true, true);
+  }
+
+  hurtPlayer(player, enemy){
+    this.resetShipPos(enemy);
+    player.x = this.game.config.width / 2-8;
+    player.y = this.game.config.height - 64;
+  }
+
+  hitEnemy(projectile, enemy){
+    projectile.destroy();
+    this.resetShipPos(enemy);
+    this.score += 15;
+    var scoreFormated = this.zeroPad(this.score, 6);
+    this.scoreLabel.text = "SCORE " + scoreFormated;
+
+  }
+
+  zeroPad(number, size){
+    var stringNumber = String(number);
+    while(stringNumber.length < (size || 2)){
+        stringNumber = "0" + stringNumber;
+    }
+    return stringNumber;
 
   }
 
@@ -71,6 +129,16 @@ class Scene2 extends Phaser.Scene{
     this.background.tilePositionY -= 0.5;
 
     this.movePlayerManager();
+
+    
+    if (this.spacebar.isDown) {
+      this.shootBeam();
+    }
+
+    for(var i = 0; i< this.projectiles.getChildren().length; i++){
+      var beam = this.projectiles.getChildren()[i];
+      beam.update();
+    }
 
     
   }
@@ -98,17 +166,12 @@ class Scene2 extends Phaser.Scene{
     } else if(this.cursorKeys.down.isDown){
       this.player.setVelocityY(gameSettings.playerSpeed);
     }
-
-    // if (Phaser.Input.keyboard.JustDown(this.spacebar)){
-    //   console.log("Fire!");
-    // }
-
-    if (this.spacebar.isDown) {
-      this.shootBeam();
-  }
   }
 
   shootBeam(){
-    var beam = new Beam(this); 
- }
-}
+    var beam = new Beam(this);
+    this.projectiles.add(beam); 
+   }
+
+  
+} 
