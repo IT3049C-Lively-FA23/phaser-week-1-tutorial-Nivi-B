@@ -215,6 +215,8 @@ class Scene2 extends Phaser.Scene{
   }
 
   movePlayerManager(){
+    this.player.setVelocity(0);
+
     if(this.cursorKeys.left.isDown){
       this.player.setVelocityX(-gameSettings.playerSpeed);
     } else if(this.cursorKeys.right.isDown){
@@ -230,7 +232,7 @@ class Scene2 extends Phaser.Scene{
 
   shootBeam(){
     var beam = new Beam(this);
-    this.projectiles.add(beam); 
+    // this.projectiles.add(beam); 
     this.beamSound.play();
    }
 

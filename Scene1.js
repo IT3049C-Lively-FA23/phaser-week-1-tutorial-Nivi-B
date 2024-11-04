@@ -105,7 +105,7 @@ class Scene1 extends Phaser.Scene{
     this.anims.create({
       key: "beam_anim",
       frames: this.anims.generateFrameNumbers("beam"),
-      frameRate: 20,
+      frameRate: 10,
       repeat: -1
     });
 
